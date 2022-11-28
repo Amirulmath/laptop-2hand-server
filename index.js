@@ -17,12 +17,19 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const categoriesCollection = client.db('laptopShop').collection('categories');
+        const productsCollection = client.db('laptopShop').collection('products');
 
         // Use Aggregate to query multiple collection and then merge data
         app.get('/categories', async (req, res) => {
             const query = {};
             const category = await categoriesCollection.find(query).toArray();
             res.send(category);
+        });
+
+        app.post('/products', async(req, res) =>{
+            const product = req.body;
+            const result = await productsCollection.insertOne(product);
+            res.send(result);
         })
 
     }
