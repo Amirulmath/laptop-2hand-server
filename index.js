@@ -26,12 +26,27 @@ async function run() {
             res.send(category);
         });
 
+        app.get('/categories/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const type = await categoriesCollection.findOne(query);
+            res.send(type);   
+        });
+
         app.get('/myproduct', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const myProduct = await productsCollection.find(query).toArray();
             res.send(myProduct);
-        })
+        });
+
+        app.get('/brands', async (req, res) => {
+            const brand = req.query.brand;
+            const query = { brand: brand };
+            const brands = await productsCollection.find(query).toArray();
+            res.send(brands);
+            console.log(brands);
+        });
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -39,13 +54,6 @@ async function run() {
             res.send(products);
         });
 
-        // app.get('/products/:brand', async (req, res) => {
-        //     const brand = req.params.brand;
-        //     const query = {brand: ObjectId(brand)};
-        //     const productsBrand = await productsCollection.filter(query);
-        //     res.send(productsBrand);
-        // });
-        
         app.post('/products', async(req, res) =>{
             const product = req.body;
             const result = await productsCollection.insertOne(product);
