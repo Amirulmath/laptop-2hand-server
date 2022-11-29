@@ -18,6 +18,8 @@ async function run() {
     try {
         const categoriesCollection = client.db('laptopShop').collection('categories');
         const productsCollection = client.db('laptopShop').collection('products');
+        const bookingsCollection = client.db('laptopShop').collection('bookings');
+        const reportedCollection = client.db('laptopShop').collection('reported');
 
         // Use Aggregate to query multiple collection and then merge data
         app.get('/categories', async (req, res) => {
@@ -45,7 +47,6 @@ async function run() {
             const query = { brand: brand };
             const brands = await productsCollection.find(query).toArray();
             res.send(brands);
-            console.log(brands);
         });
 
         app.get('/products', async (req, res) => {
@@ -57,6 +58,25 @@ async function run() {
         app.post('/products', async(req, res) =>{
             const product = req.body;
             const result = await productsCollection.insertOne(product);
+            res.send(result);
+        });
+
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const bookings = await bookingsCollection.find(query).toArray();
+            res.send(bookings);
+        })
+
+        app.post('/bookings', async (req, res) =>{
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        });
+
+        app.post('/reported', async (req, res) =>{
+            const report = req.body;
+            const result = await reportedCollection.insertOne(report);
             res.send(result);
         })
 
