@@ -3,6 +3,8 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -94,6 +96,13 @@ async function run() {
             res.send(bookings);
         });
 
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingsCollection.findOne(query);
+            res.send(booking);
+        });
+
         app.post('/bookings', async (req, res) =>{
             const booking = req.body;
             const result = await bookingsCollection.insertOne(booking);
@@ -105,6 +114,39 @@ async function run() {
             const result = await reportedCollection.insertOne(report);
             res.send(result);
         });
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async (req, res) =>{
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = {_id: ObjectId(id)}
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        });
+        
 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
@@ -122,6 +164,13 @@ async function run() {
             const query = { specialty: specialty };
             const specialties = await usersCollection.find(query).toArray();
             res.send(specialties);
+        });
+
+        app.get('/users/Seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.specialty === 'Seller' });
         });
 
         app.get('/users', async (req, res) => {
