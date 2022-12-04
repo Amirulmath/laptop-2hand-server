@@ -42,6 +42,7 @@ async function run() {
         const bookingsCollection = client.db('laptopShop').collection('bookings');
         const reportedCollection = client.db('laptopShop').collection('reported');
         const usersCollection = client.db('laptopShop').collection('users');
+        const paymentsCollection = client.db('laptopShop').collection('payments');
 
         // Use Aggregate to query multiple collection and then merge data
         app.get('/categories', async (req, res) => {
@@ -109,6 +110,12 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/reported', async (req, res) => {
+            const query = {};
+            const reports = await reportedCollection.find(query).toArray();
+            res.send(reports);
+        });
+
         app.post('/reported', async (req, res) =>{
             const report = req.body;
             const result = await reportedCollection.insertOne(report);
@@ -117,7 +124,7 @@ async function run() {
 
         app.post('/create-payment-intent', async (req, res) => {
             const booking = req.body;
-            const price = booking.price;
+            const price = booking.expectedPrice;
             const amount = price * 100;
 
             const paymentIntent = await stripe.paymentIntents.create({
@@ -147,7 +154,6 @@ async function run() {
             res.send(result);
         });
         
-
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
